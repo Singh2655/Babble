@@ -21,10 +21,13 @@ const ServerMember: FC<ServerMemberProps> = ({member,server}) => {
     const icon=IconMap[member.role]
     const params=useParams()
     const router=useRouter()
+    const onClick=()=>{
+      router.push(`/servers/${params?.serverId}/conversation/${member.id}`)
+    }
   return (
     <button className={cn('group px-2 py-2 rounded-md flex items-center gap-x-2 w-full hover:bg-zinc-700/10 dark:hover:bg-zinc-700/50 transition mb-1',
     params?.memberId===member.id && 'text-zinc-700/20 dark:text-zinc-700'
-    )}>
+    )} onClick={onClick}>
         <UserAvatar src={member.profile.imageUrl} className='h-8 w-8'/>
         {icon}
         <p className={cn('line-clamp-1 font-semibold text-sm text-zinc-500 group-hover:text-zinc-600 dark:text-zinc-400 dark:group-hover:text-zinc-300 transition',

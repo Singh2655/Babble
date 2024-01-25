@@ -1,11 +1,42 @@
-import { FC } from 'react'
+import { currentProfile } from "@/lib/currentProfile";
+import { db } from "@/lib/db";
+import { redirectToSignIn } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import { FC } from "react";
 
 interface ServerIdPageProps {
-  params:{serverId:string}
+  params: { serverId: string };
 }
 
-const ServerIdPage: FC<ServerIdPageProps> = ({params}:ServerIdPageProps) => {
-  return <div>{params.serverId}</div>
-}
+const ServerIdPage: FC<ServerIdPageProps> = async ({
+  params
+}: ServerIdPageProps) => {
+  const profile = await currentProfile();
+  if (!profile) return redirectToSignIn();
+  const server = await db.server.findFirst({
+    where:{
+      id:params?.serverId,
+      members:{
+        some:{
+          profileId:profile.id
+        }
+      }
+    },
+    include:{
+      channels:{
+        where:{
+          name:"general",
+        },
+        orderBy:{
+          createdAt:"asc",
+        }
+      }
+    }
+  });
+  const initialChannel=server?.channels[0]
+  if(initialChannel?.name!=="general")return null
 
-export default ServerIdPage
+  return redirect(`/servers/${params?.serverId}/channels/${initialChannel.id}`)
+};
+
+export default ServerIdPage;

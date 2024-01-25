@@ -10,6 +10,7 @@ import LeaveServerModal from "../modals/LeaveServerModal"
 import DeleteServerModal from "../modals/DeleteServerModal"
 import DeleteChannelModal from "../modals/DeleteChannelModal"
 import  EditChannelModal  from "../modals/EditChannelModal"
+import MessageFileModal from "../modals/MessageFileModal"
 
 type Props = {}
 
@@ -32,6 +33,7 @@ const ModalProvider = (props: Props) => {
     <DeleteServerModal/>
     <DeleteChannelModal/>
     <EditChannelModal/>
+    <MessageFileModal/>
     </>
   )
 }
