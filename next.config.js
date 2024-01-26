@@ -5,7 +5,10 @@ const nextConfig = {
             "uploadthing.com",
             "utfs.io"
         ]
-    }
+    },
+    experimental: {
+        appDir: false,
+      },
 }
 
 module.exports = nextConfig
