@@ -9,10 +9,6 @@ type SocketContextType={
     isConnected:boolean
 }
 
-interface SocketProvidersProps{
-
-}
-
 const SocketContext=createContext<SocketContextType>({
     socket: null,
     isConnected:false

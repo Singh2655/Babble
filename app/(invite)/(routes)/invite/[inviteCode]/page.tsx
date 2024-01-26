@@ -13,7 +13,7 @@ interface pageProps {
 const page: FC<pageProps> = async ({params}) => {
   const profile=await currentProfile()
   if(!profile)return redirectToSignIn()
-  if(!params.inviteCode)redirect("/")
+  if(!params.inviteCode)return redirect("/")
   const existingServer=await db.server.findFirst({
         where:{
           invitecode:params.inviteCode,
