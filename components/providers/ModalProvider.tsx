@@ -23,6 +23,8 @@ const ModalProvider = (props: Props) => {
     },[])
     if(!isMounted)return null
 
+    
+
   return (
     <>
     <CreateServerModal/>

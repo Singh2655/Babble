@@ -73,9 +73,9 @@ export async function GET(
     }
 
     return NextResponse.json({
-        items: messages,
-        nextCursor
-      });
+      items: messages,
+      nextCursor
+    });
   } catch (error) {
     console.log("[MESSAGES_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
