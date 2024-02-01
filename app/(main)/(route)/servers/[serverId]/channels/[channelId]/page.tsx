@@ -1,83 +1,78 @@
-import { NextResponse } from "next/server";
-import { Message } from "@prisma/client";
-
+import MediaRoom from "@/components/MediaRoom";
+import ChatHeader from "@/components/chat/ChatHeader";
+import ChatInput from "@/components/chat/ChatInput";
+import ChatMessages from "@/components/chat/ChatMessages";
 import { currentProfile } from "@/lib/currentProfile";
 import { db } from "@/lib/db";
+import { redirectToSignIn } from "@clerk/nextjs";
+import { ChannelType } from "@prisma/client";
+import { redirect } from "next/navigation";
+import { FC } from "react";
 
-const MESSAGES_BATCH = 10;
-
-export async function GET(
-  req: Request
-) {
-  try {
-    const profile = await currentProfile();
-    const { searchParams } = new URL(req.url);
-
-    const cursor = searchParams.get("cursor");
-    const channelId = searchParams.get("channelId");
-
-    if (!profile) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-  
-    if (!channelId) {
-      return new NextResponse("Channel ID missing", { status: 400 });
-    }
-
-    let messages: Message[] = [];
-
-    if (cursor) {
-      messages = await db.message.findMany({
-        take: MESSAGES_BATCH,
-        skip: 1,
-        cursor: {
-          id: cursor,
-        },
-        where: {
-          channelId,
-        },
-        include: {
-          member: {
-            include: {
-              profile: true,
-            }
-          }
-        },
-        orderBy: {
-          createdAt: "desc",
-        }
-      })
-    } else {
-      messages = await db.message.findMany({
-        take: MESSAGES_BATCH,
-        where: {
-          channelId,
-        },
-        include: {
-          member: {
-            include: {
-              profile: true,
-            }
-          }
-        },
-        orderBy: {
-          createdAt: "desc",
-        }
-      });
-    }
-
-    let nextCursor = null;
-
-    if (messages.length === MESSAGES_BATCH) {
-      nextCursor = messages[MESSAGES_BATCH - 1].id;
-    }
-
-    return NextResponse.json({
-      items: messages,
-      nextCursor
-    });
-  } catch (error) {
-    console.log("[MESSAGES_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
-  }
+interface pageProps {
+  params: {
+    serverId: string;
+    channelId: string;
+  };
 }
+
+const page: FC<pageProps> = async ({ params }) => {
+  const profile = await currentProfile();
+  if (!profile) return redirectToSignIn();
+
+  const channel = await db.channel.findFirst({
+    where: {
+      id: params.channelId,
+    },
+  });
+  const member = await db.member.findFirst({
+    where: {
+      profileId: profile.id,
+      serverId: params.serverId,
+    },
+  });
+  if (!channel || !member) redirect("/");
+  return (
+    <div className="bg-while dark:bg-[#313338] flex flex-col h-full">
+      <ChatHeader
+        serverId={channel.serverId}
+        type="channel"
+        name={channel.name}
+      />
+
+      {channel.type === ChannelType.TEXT && (
+        <>
+          <ChatMessages
+            name={channel.name}
+            member={member}
+            type="channel"
+            apiUrl="/api/messages"
+            socketUrl="/api/socket/messages"
+            socketQuery={{ channelId: channel.id, serverId: channel.serverId }}
+            paramKey="channelId"
+            paramValue={channel.id}
+            chatId={channel.id}
+          />
+          <ChatInput
+            name={channel.name}
+            type="channel"
+            apiUrl="/api/socket/messages"
+            query={{
+              channelId: channel.id,
+              serverId: channel.serverId,
+            }}
+          />
+        </>
+      )}
+
+      {channel.type===ChannelType.AUDIO && (
+        <MediaRoom chatId={channel.id} video={false} audio={true}/>
+      )}
+      {channel.type===ChannelType.VIDEO && (
+        <MediaRoom chatId={channel.id} video={true} audio={false}/>
+      )}
+    </div>
+  );
+};
+
+export default page;
